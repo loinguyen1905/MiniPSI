@@ -4,6 +4,7 @@
 #include <chrono>
 #include <string>
 #include <mutex>
+#include <stdexcept>
 namespace osuCrypto
 { 
 
