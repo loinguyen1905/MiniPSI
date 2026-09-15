@@ -109,6 +109,43 @@ void usage(const char* argv0)
 
 }
 
+// ===== Added: file-based input/output. The PSI protocol calls are not changed. =====
+// Input : data/input_sender.csv, data/input_receiver.csv
+// Output: data/output_r.csv (-r), data/output_e.csv (-e), data/output_i.csv (-i)
+// One 128-bit item per line as 32 hex chars, the same format cryptoTools prints a block in.
+#include <fstream>
+
+std::vector<block> readSet(const std::string& path, u64 size)
+{
+    std::ifstream in(path);
+    if (!in)
+        throw std::runtime_error("cannot open " + path);
+
+    std::vector<block> items;
+    std::string line;
+    while (items.size() < size && std::getline(in, line))
+    {
+        if (line.size() < 32)
+            continue;
+        u64 high = std::stoull(line.substr(0, 16), nullptr, 16);
+        u64 low = std::stoull(line.substr(16, 16), nullptr, 16);
+        items.push_back(_mm_set_epi64x(high, low));
+    }
+
+    if (items.size() != size)
+        throw std::runtime_error(path + " has fewer than " + std::to_string(size) + " items");
+    return items;
+}
+
+void writeIntersection(const std::string& path, const std::vector<block>& inputs, const std::vector<u64>& intersection)
+{
+    std::ofstream out(path);
+    for (u64 i : intersection)
+        out << inputs[i] << "\n";
+    std::cout << "\nIntersection: " << intersection.size() << " items -> " << path << std::endl;
+}
+// ===== End of added code =====
+
 
 void EchdSender(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 numThreads = 1)
 {
@@ -128,9 +165,7 @@ void EchdSender(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 numThre
 
     std::cout << "SetSize: " << mySetSize << " vs " << theirSetSize << "   |  numThreads: " << numThreads << "\t";
 
-    std::vector<block> inputs(mySetSize);
-    for (u64 i = 0; i < inputs.size(); ++i)
-        inputs[i] = prngSet.get<block>();
+    std::vector<block> inputs = readSet("data/input_sender.csv", mySetSize);
 
     gTimer.reset();
     EcdhPsiSender sender;
@@ -164,16 +199,7 @@ void EchdReceiver(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 numTh
     std::cout << "SetSize: " << mySetSize << " vs " << theirSetSize << "   |  numThreads: " << numThreads << "\t";
 
 
-    std::vector<block> inputs(mySetSize);
-
-    for (u64 i = 0; i < 10; ++i)
-        inputs[i] = prng1.get<block>();
-
-    for (u64 i = 10; i < expectedIntersection + 10; ++i)
-        inputs[i] = prngSet.get<block>();
-
-    for (u64 i = 10 + expectedIntersection; i < inputs.size(); ++i)
-        inputs[i] = prng1.get<block>();
+    std::vector<block> inputs = readSet("data/input_receiver.csv", mySetSize);
 
     EcdhPsiReceiver recv;
     gTimer.reset();
@@ -181,6 +207,7 @@ void EchdReceiver(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 numTh
     gTimer.setTimePoint("r psi done");
 
     std::cout << gTimer << std::endl;
+    writeIntersection("data/output_r.csv", inputs, recv.mIntersection);
 
 
     for (u64 i = 0; i < recv.mIntersection.size(); ++i)//thrds.size()
@@ -220,9 +247,7 @@ void JL10Sender(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 numThre
     Endpoint ep1(ios, ipAddr_Port, EpMode::Server, name);
     std::cout << "SetSize: " << mySetSize << " vs " << theirSetSize << "   |  numThreads: " << numThreads << "\t";
     std::vector<Channel> sendChls(numThreads);
-    std::vector<block> inputs(mySetSize);
-    for (u64 i = 0; i < inputs.size(); ++i)
-        inputs[i] = prngSet.get<block>();
+    std::vector<block> inputs = readSet("data/input_sender.csv", mySetSize);
 
     JL10PsiSender sender;
 
@@ -270,12 +295,7 @@ void JL10Receiver(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 numTh
     std::cout << "====================================JL10====================================\n";
     std::cout << "SetSize: " << mySetSize << " vs " << theirSetSize << "   |  numThreads: " << numThreads << "\t";
 
-    std::vector<block> inputs(mySetSize);
-    for (u64 i = 0; i < expectedIntersection; ++i)
-        inputs[i] = prngSet.get<block>();
-
-    //for (u64 i = expectedIntersection; i < inputs.size(); ++i)
-    //      inputs[i] = prng1.get<block>();
+    std::vector<block> inputs = readSet("data/input_receiver.csv", mySetSize);
 
 
     JL10PsiReceiver recv;
@@ -291,6 +311,7 @@ void JL10Receiver(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 numTh
 
 
     std::cout << gTimer << std::endl;
+    writeIntersection("data/output_e.csv", inputs, recv.mIntersection);
 
     for (u64 g = 0; g < recvChls.size(); ++g)
     {
@@ -484,9 +505,7 @@ void Mini19Sender_Ris(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64 n
     Endpoint ep1(ios, ipAddr_Port, EpMode::Server, name);
     std::cout << "SetSize: " << mySetSize << " vs " << theirSetSize << "   |  numThreads: " << numThreads << "\t";
     std::vector<Channel> sendChls(numThreads);
-    std::vector<block> inputs(mySetSize);
-    for (u64 i = 0; i < inputs.size(); ++i)
-        inputs[i] = prngSet.get<block>();
+    std::vector<block> inputs = readSet("data/input_sender.csv", mySetSize);
 
     MiniSender_Ris sender;
 
@@ -540,12 +559,7 @@ void Mini19Receiver_Ris(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64
     std::cout << "\n\n====================================Mini19Receiver_Ris====================================\n";
     std::cout << "SetSize: " << mySetSize << " vs " << theirSetSize << "   |  numThreads: " << numThreads << "\t";
 
-    std::vector<block> inputs(mySetSize);
-    for (u64 i = 0; i < expectedIntersection; ++i)
-        inputs[i] = prngSet.get<block>();
-
-    for (u64 i = expectedIntersection; i < inputs.size(); ++i)
-        inputs[i] = prng1.get<block>();
+    std::vector<block> inputs = readSet("data/input_receiver.csv", mySetSize);
 
 
     MiniReceiver_Ris recv;
@@ -559,6 +573,7 @@ void Mini19Receiver_Ris(u64 mySetSize, u64 theirSetSize, string ipAddr_Port, u64
 
 
     std::cout << gTimer << std::endl;
+    writeIntersection("data/output_i.csv", inputs, recv.mIntersection);
 
     u64 dataSent = 0, dataRecv(0);
     for (u64 g = 0; g < recvChls.size(); ++g)
