@@ -879,7 +879,7 @@ namespace osuCrypto
 		{
 			//compute (g^k)^ri
 
-			if (crypto_scalarmult_ristretto255(gk_sum, mScalars[i], g_k) != 0) {
+			if (crypto_scalarmult_curve25519(gk_sum, mScalars[i], g_k) != 0) {
 
 				std::cout << "crypto_scalarmult_ristretto255(gk_sum, mScalars[i], g_k) != 0) != 0\n";
 				throw std::runtime_error("rt error at " LOCATION);
@@ -942,7 +942,7 @@ namespace osuCrypto
 						{
 							//std::cout << "match != localMasks.end()" << std::endl;
 
-							if (memcmp(theirMasks, &match->second.first, n1n2MaskBytes) == 0) // check full mask
+							if (memcmp(theirMasks, &match->second.first, sizeof(block)) == 0) // check full mask
 							{
 								if (isMultiThreaded)
 								{

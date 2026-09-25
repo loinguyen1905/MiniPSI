@@ -2794,7 +2794,7 @@ namespace osuCrypto
 
 		ropo_ge25519_p3 AA;           /* var A edwards25519.ExtendedGroupElement */
 
-		crypto_scalarmult_ristretto255_base(AAbytes, privateKey);
+		crypto_scalarmult_ed25519_base(AAbytes, privateKey);
 
 		//unsigned char* t = new unsigned char[crypto_core_ristretto255_BYTES];
 		//for (unsigned int i = 0; i < 32; ++i) {
@@ -2882,7 +2882,7 @@ namespace osuCrypto
 		ropo_fe25519_mul(r, t0, c);       /* edwards25519.FeMul(&r, &t0, &c) // 7 */
 
 		ropo_fe25519_sq(t0, u);           /* edwards25519.FeSquare(&t0, &u) // 2 */
-		ropo_fe25519_sq(t0, u);          /* edwards25519.FeMul(&t0, &t0, &u) // 3 */
+		ropo_fe25519_mul(t0, t0, u);          /* edwards25519.FeMul(&t0, &t0, &u) // 3 */
 		ropo_fe25519_mul(r, r, t0);          /* edwards25519.FeMul(&r, &r, &t0) */
 
 		ropo_fe25519_sq(t0, b8);          /* edwards25519.FeSquare(&t0, &b8) // 16 */

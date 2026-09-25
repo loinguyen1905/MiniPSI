@@ -262,7 +262,7 @@ namespace osuCrypto
 		mK = new unsigned char[crypto_core_ristretto255_SCALARBYTES];
 		mG_K = new unsigned char[crypto_core_ristretto255_BYTES];
 		crypto_core_ristretto255_scalar_random(mK);
-		crypto_scalarmult_ristretto255_base(mG_K, mK); //g^k
+		crypto_scalarmult_curve25519_base(mG_K, mK); //g^k
 
 		//std::cout << "s k= " << toBlock((u8*)mK) << std::endl;
 		//std::cout << "s g^k= " << toBlock((u8*)mG_K) << std::endl;
@@ -418,7 +418,7 @@ namespace osuCrypto
 					unsigned char* yri_K = new unsigned char[crypto_core_ristretto255_BYTES];
 
 					//(g^ri)^k
-					crypto_scalarmult_ristretto255(yri_K, mK, point_ri);
+					crypto_scalarmult_curve25519(yri_K, mK, point_ri);
 
 				/*	SHA2 inputHasher;  
 					u8 hashOut[SHA2::HashSize];
