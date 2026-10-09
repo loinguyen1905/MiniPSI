@@ -217,3 +217,13 @@ offline.txt
 Makefile
 
 [path to project]/node_modules/
+
+# Local builds (build_all.sh) and benchmark results
+__pycache__/
+thirdparty/linux/gmp/
+thirdparty/linux/gf2x/
+thirdparty/linux/ntl/
+thirdparty/linux/*.tar.*
+benchmark/results*/
+benchmark/config.sh
+benchmark/STOP
