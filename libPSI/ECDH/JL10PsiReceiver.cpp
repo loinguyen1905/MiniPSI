@@ -2612,7 +2612,7 @@ namespace osuCrypto
 			std::vector<u8> recvBuffs;
 			chl.recv(recvBuffs); //receive Hash
 
-			if (recvBuffs.size() != theirInputSize * n1n2MaskBytes)
+			if (recvBuffs.size() != (theirEndIdx - theirStartIdx) * n1n2MaskBytes)
 			{
 				std::cout << "error @ " << (LOCATION) << std::endl;
 				throw std::runtime_error(LOCATION);
@@ -2670,7 +2670,7 @@ namespace osuCrypto
 							//std::cout << "r myMasks: " << i + k << " - " << match->second.first << std::endl;
 
 							if (memcmp(theirMasks, &match->second.first, n1n2MaskBytes) == 0) // check full mask
-								mIntersection.push_back(match->second.second);
+								{ std::lock_guard<std::mutex> lock(mtx); mIntersection.push_back(match->second.second); }
 						}
 						theirMasks += n1n2MaskBytes;
 
